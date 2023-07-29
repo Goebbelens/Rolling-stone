@@ -59,5 +59,15 @@ public class StoneRoll : MonoBehaviour
         Debug.Log("Distance: " + Vector3.Distance(transform.position, player.position) + "\nPrevDistance: " + PrevDistance);
         PrevDistance = Vector3.Distance(transform.position, player.position);
     }
+    private void OnDrawGizmos()
+    {
+        BallGizmos(stone.velocity, Color.yellow);
+        BallGizmos(player.position, Color.blue);
+    }
 
+    private void BallGizmos(Vector3 to, Color color)
+    {
+        Gizmos.color = color;
+        Gizmos.DrawLine(transform.position, to);
+    }
 }
