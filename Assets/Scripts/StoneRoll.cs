@@ -27,6 +27,7 @@ public class StoneRoll : MonoBehaviour
     float stoneStopTime;
     public float timeBeforeMove = 1f;
     Vector3 nineAngle;
+    Vector3 tineAngle;
 
     void Start()
     {
@@ -44,6 +45,7 @@ public class StoneRoll : MonoBehaviour
     }
     private void Update()
     {
+        Pointer.LookAt(player.position);
         TXTStoneAngle.text = "Angle: " + Vector3.Angle(stone.velocity.normalized, direction.normalized).ToString();
         if (Input.GetKeyDown(KeyCode.R))
         {
@@ -78,7 +80,7 @@ public class StoneRoll : MonoBehaviour
             stone.AddForce(direction.normalized * stoneSpeed);
             if(Vector3.Angle(stone.velocity.normalized, direction.normalized) > allowedAngle)
             {
-                stone.AddForce((player.position - stone.velocity));
+                //stone.AddForce((player.position - stone.velocity));
             }
         }
 
@@ -88,17 +90,25 @@ public class StoneRoll : MonoBehaviour
         }
         prevDistance = Vector3.Distance(transform.position, player.position);
         Quaternion anglen = Quaternion.AngleAxis(90, Vector3.up);
+        Quaternion tanglen = Quaternion.AngleAxis(270, Vector3.up);
+        if(Vector3.Angle(player.position, nineAngle) - 90 < Vector3.Angle(player.position, tineAngle))
+        {
+
+        }
         //
         //
         //
         //
-        //nineAngle = Vector3.forward * anglen;
+        nineAngle = anglen * player.position;
+        tineAngle = tanglen * player.position;
+        Debug.Log("nineAngle: " + (Vector3.Angle(player.position, nineAngle) - 90) + "\ntineAngle: " + Vector3.Angle(player.position, tineAngle));
     }
     private void OnDrawGizmos()
     {
         BallGizmos(stone.velocity, Color.yellow);
         BallGizmos(player.position, Color.blue);
         BallGizmos(nineAngle, new Color(0.2f, 0.5f, 0.1f));
+        BallGizmos(tineAngle, new Color(0.5f, 0.5f, 0.1f));
     }
 
     private void BallGizmos(Vector3 to, Color color)
@@ -106,5 +116,11 @@ public class StoneRoll : MonoBehaviour
         Gizmos.color = color;
         Gizmos.DrawLine(transform.position, to);
     }
-    
+
+    private void BallGizmos(Vector3 from, Vector3 to, Color color)
+    {
+        Gizmos.color = color;
+        Gizmos.DrawLine(from, to);
+    }
+
 }
