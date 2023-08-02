@@ -22,18 +22,21 @@ public class StoneRoll : MonoBehaviour
     public Transform AngleCanvas;
     public float allowedAngle = 5f;
     public TextMeshProUGUI TXTStoneAngle;
-    Vector3 direction;
-    bool isMoving = true;
-    float stoneStopTime;
+    private Vector3 direction;
+    private bool isMoving = true;
+    private float stoneStopTime;
     public float timeBeforeMove = 1f;
-    Vector3 nineAngle;
-    Vector3 tineAngle;
+    private Vector3 zeroYpointer;
+    
+    //Vector3 nineAngle;
+    //Vector3 tineAngle;
 
     void Start()
     {
         stone = GetComponent<Rigidbody>();
         TXTStoneAngle = AngleCanvas.GetComponent<TextMeshProUGUI>();
         minDistance = Vector3.Distance(transform.position, player.position);
+        zeroYpointer = Pointer.position - new Vector3(0f, Pointer.position.y, 0f);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -46,12 +49,9 @@ public class StoneRoll : MonoBehaviour
     private void Update()
     {
         Pointer.LookAt(player.position);
+        Pointer.rotation = new Quaternion (0, Pointer.rotation.y, 0 , Pointer.rotation.w);
+        zeroYpointer = Pointer.position - new Vector3(0f, Pointer.position.y, 0f);
         TXTStoneAngle.text = "Angle: " + Vector3.Angle(stone.velocity.normalized, direction.normalized).ToString();
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            SceneManager.LoadScene(0);
-            Time.timeScale = 1;
-        }
     }
     void FixedUpdate()
     {
@@ -59,7 +59,7 @@ public class StoneRoll : MonoBehaviour
         direction.y /= 2;
 
 
-        if(isMoving && prevDistance - minDistance >= 5f)
+        if (isMoving && prevDistance - minDistance >= 5f)
         {
             isMoving = false;
             
@@ -89,35 +89,32 @@ public class StoneRoll : MonoBehaviour
             minDistance = Vector3.Distance(transform.position, player.position);
         }
         prevDistance = Vector3.Distance(transform.position, player.position);
-        Quaternion anglen = Quaternion.AngleAxis(90, Vector3.up);
-        Quaternion tanglen = Quaternion.AngleAxis(270, Vector3.up);
-        if(Vector3.Angle(player.position, nineAngle) - 90 < Vector3.Angle(player.position, tineAngle))
-        {
 
-        }
-        //
-        //
-        //
-        //
-        nineAngle = anglen * player.position;
-        tineAngle = tanglen * player.position;
-        Debug.Log("nineAngle: " + (Vector3.Angle(player.position, nineAngle) - 90) + "\ntineAngle: " + Vector3.Angle(player.position, tineAngle));
+        Debug.Log("Right ang: " + Vector3.Angle(zeroYpointer + Pointer.right - new Vector3(0f, Pointer.position.y, 0f), 
+            stone.velocity - new Vector3 (0, stone.velocity.y, 0)) + 
+            "\nLeft ang: 0" + Vector3.Angle(Vector3.zero - Pointer.right - new Vector3(0f, Pointer.position.y, 0f), stone.velocity - new Vector3(0, stone.velocity.y, 0)));
     }
     private void OnDrawGizmos()
     {
-        BallGizmos(stone.velocity, Color.yellow);
-        BallGizmos(player.position, Color.blue);
-        BallGizmos(nineAngle, new Color(0.2f, 0.5f, 0.1f));
-        BallGizmos(tineAngle, new Color(0.5f, 0.5f, 0.1f));
+        BallGizmos(zeroYpointer, stone.velocity - new Vector3(0, stone.velocity.y, 0), Color.yellow);
+        BallGizmos(player.position - new Vector3 (0f,player.position.y, 0), Color.blue);
+
+        BallGizmos(zeroYpointer, zeroYpointer + Pointer.right * 20, Color.red);
+        BallGizmos(zeroYpointer, zeroYpointer - Pointer.right * 20, new Color(1f, 0.5f, 0, 1));
+        //BallGizmos(stone.velocity, player.position, Color.red);
+        //BallGizmos(Vector3.Distance(stone.velocity, player.position) * Pointer.right, Color.red);
+        BallGizmos(zeroYpointer, zeroYpointer + Pointer.forward * 100, Color.black);
+        //BallGizmos(nineAngle, new Color(0.2f, 0.5f, 0.1f));
+        //BallGizmos(tineAngle, new Color(0.5f, 0.5f, 0.1f));
     }
 
-    private void BallGizmos(Vector3 to, Color color)
+    public void BallGizmos(Vector3 to, Color color)
     {
         Gizmos.color = color;
         Gizmos.DrawLine(transform.position, to);
     }
 
-    private void BallGizmos(Vector3 from, Vector3 to, Color color)
+    public void BallGizmos(Vector3 from, Vector3 to, Color color)
     {
         Gizmos.color = color;
         Gizmos.DrawLine(from, to);
