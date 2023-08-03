@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -24,10 +25,24 @@ public class StoneRoll : MonoBehaviour
     public TextMeshProUGUI TXTStoneAngle;
     private Vector3 direction;
     private bool isMoving = true;
+    public float allowedDistance = 5f;
     private float stoneStopTime;
+    public float velocityDecrease = 2f;
     public float timeBeforeMove = 1f;
     private Vector3 zeroYpointer;
     
+    public float tvDegrees;
+    public float nvDegrees;
+    public float mvDegrees;
+
+    public Transform nSphere;
+    public Transform mSphere;
+
+    public Quaternion nAngle;
+    public Quaternion mnAngle;
+
+    [Range(5f, 20f)]
+    private float arrowLength = 10f;
     //Vector3 nineAngle;
     //Vector3 tineAngle;
 
@@ -49,9 +64,16 @@ public class StoneRoll : MonoBehaviour
     private void Update()
     {
         Pointer.LookAt(player.position);
-        Pointer.rotation = new Quaternion (0, Pointer.rotation.y, 0 , Pointer.rotation.w);
+        Vector3 pointZzero = Pointer.eulerAngles;
+        pointZzero = new Vector3 (0f, pointZzero.y, 0f);
+        Pointer.eulerAngles = pointZzero;
         zeroYpointer = Pointer.position - new Vector3(0f, Pointer.position.y, 0f);
         TXTStoneAngle.text = "Angle: " + Vector3.Angle(stone.velocity.normalized, direction.normalized).ToString();
+
+        nAngle = Quaternion.AngleAxis(90 + Pointer.eulerAngles.y, Vector3.up);
+        mnAngle = Quaternion.AngleAxis(270 + Pointer.eulerAngles.y, Vector3.up);
+        nSphere.position = nAngle * Vector3.forward * 5 + Pointer.position;
+        mSphere.position = mnAngle * Vector3.forward * 5 + Pointer.position;
     }
     void FixedUpdate()
     {
@@ -59,7 +81,9 @@ public class StoneRoll : MonoBehaviour
         direction.y /= 2;
 
 
-        if (isMoving && prevDistance - minDistance >= 5f)
+
+
+        if (isMoving && prevDistance - minDistance >= allowedDistance)
         {
             isMoving = false;
             
@@ -67,12 +91,13 @@ public class StoneRoll : MonoBehaviour
         }
         if (!isMoving)
         {
-            stone.AddForce(-stone.velocity * 2);
+            stone.AddForce(-stone.velocity * velocityDecrease);
             
             if (Time.time - stoneStopTime >= timeBeforeMove)
             {
                 isMoving = true;
                 minDistance = prevDistance;
+                stone.velocity = Vector3.zero;
             }
         }
         if (isMoving)
@@ -90,20 +115,39 @@ public class StoneRoll : MonoBehaviour
         }
         prevDistance = Vector3.Distance(transform.position, player.position);
 
-        Debug.Log("Right ang: " + Vector3.Angle(zeroYpointer + Pointer.right - new Vector3(0f, Pointer.position.y, 0f), 
-            stone.velocity - new Vector3 (0, stone.velocity.y, 0)) + 
-            "\nLeft ang: 0" + Vector3.Angle(Vector3.zero - Pointer.right - new Vector3(0f, Pointer.position.y, 0f), stone.velocity - new Vector3(0, stone.velocity.y, 0)));
+
+
     }
     private void OnDrawGizmos()
     {
-        BallGizmos(zeroYpointer, stone.velocity - new Vector3(0, stone.velocity.y, 0), Color.yellow);
-        BallGizmos(player.position - new Vector3 (0f,player.position.y, 0), Color.blue);
+        BallGizmos(player.position, Color.blue);
+        BallGizmos(Pointer.position, Pointer.forward * 10 + Pointer.position, new Color(0.5f, 0.5f, 1f, 1f));
 
-        BallGizmos(zeroYpointer, zeroYpointer + Pointer.right * 20, Color.red);
-        BallGizmos(zeroYpointer, zeroYpointer - Pointer.right * 20, new Color(1f, 0.5f, 0, 1));
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        Vector3 position = transform.position;
+        Vector3 drawVelocity = stone.velocity;
+        BallGizmos(stone.velocity, Color.yellow);
+        BallGizmos(Quaternion.LookRotation(stone.velocity).eulerAngles, new Color(1f,0f,1f,1f));
+
+        BallGizmos(Pointer.position, nAngle * Vector3.forward * 5 + Pointer.position, Color.cyan);
+        BallGizmos(Pointer.position, mnAngle * Vector3.forward * 5 + Pointer.position, new Color(1f, 0.5f, 0f, 1f));
+        
+
+        if (stone.velocity.magnitude < 0.1f)
+        {
+            return;
+        }
+
+        Handles.color = Color.red;
+        Handles.ArrowHandleCap(0, position, Quaternion.LookRotation(drawVelocity), arrowLength, EventType.Repaint);
+
+
         //BallGizmos(stone.velocity, player.position, Color.red);
         //BallGizmos(Vector3.Distance(stone.velocity, player.position) * Pointer.right, Color.red);
-        BallGizmos(zeroYpointer, zeroYpointer + Pointer.forward * 100, Color.black);
         //BallGizmos(nineAngle, new Color(0.2f, 0.5f, 0.1f));
         //BallGizmos(tineAngle, new Color(0.5f, 0.5f, 0.1f));
     }
